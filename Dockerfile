@@ -104,6 +104,7 @@ COPY --from=collector /bar/ /
 
 # environment settings
 ENV \
+    XDG_CACHE_HOME=/tmp \
     TZ=Asia/Seoul \
     PATH="/app/bin:${PATH}"
 
