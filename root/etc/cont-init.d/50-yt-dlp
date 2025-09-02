@@ -1,0 +1,36 @@
+#!/usr/bin/with-contenv bash
+
+# checking duplicates in YT_DLP_CRON@
+crons=()
+for cron in "${!YT_DLP_CRON@}"; do
+    crons+=("${!cron}")
+done
+ndup=$(printf '%s\n' "${crons[@]}"|awk '!($0 in seen){seen[$0];c++} END {print c}')
+if [ ${#crons[@]} -ne 0 ] && [ ${#crons[@]} -ne "$ndup" ]; then
+    echo "*** ERROR: found duplicates in your YT_DLP_CRON*"
+    while IFS= read -r dup; do
+        printf "  - \"%s\" -> " "$dup"
+        for cron in "${!YT_DLP_CRON@}"; do
+            [ "$dup" = "${!cron}" ] && printf '%s ' "${cron}"
+        done
+        printf "\n"
+    done <<< "$(printf '%s\n' "${crons[@]}"|awk '!($0 in seen){seen[$0];next} 1')"
+    exit 1
+fi
+
+if [ -n "${YT_DLP_UPDATE_ARG}" ]; then
+    echo "*** updating yt-dlp with arg: ${YT_DLP_UPDATE_ARG}"
+    /usr/local/bin/yt-dlp ${YT_DLP_UPDATE_ARG}
+fi
+
+fix_ownership() {
+    find "$@" \! \( -uid "$(id -u abc)" -gid "$(id -g abc)" \) -print0 | \
+        xargs -0 --no-run-if-empty chown -h abc:abc
+}
+
+# permissions
+fix_ownership \
+    /config \
+    /downloads
+
+echo "*** yt-dlp $(/usr/local/bin/yt-dlp --version) ready!"

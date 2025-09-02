@@ -1,0 +1,16 @@
+#!/bin/bash
+
+LOCK_FILE="/tmp/yt-dlp.lock"
+
+exec 200> "$LOCK_FILE"
+
+# acquiring lock using flock...
+# -x: get an exclusive lock
+# -w <secs>: wait for a limited amount of time
+if ! flock -x -w 10 200; then
+    echo "ERROR: Another instance of yt-dlp is already running. Timed out after 10 seconds..."
+    exit 1
+fi
+
+exec s6-setuidgid abc \
+    /usr/local/bin/yt-dlp "$@"

@@ -1,0 +1,13 @@
+#!/usr/bin/with-contenv bash
+
+# any ENVs starting with YT_DLP_CRON
+for cron in "${!YT_DLP_CRON@}"; do
+    args="YT_DLP_ARGS${cron//YT_DLP_CRON/}"
+    if [[ -n "${!cron}" ]] && [[ -n "${!args}" ]]; then
+        echo "*** scheduling yt-dlp job with args: '${!args}'"
+        go-cron "${!cron}" yt-dlp ${!args} &
+        sleep 2
+    fi
+done
+
+exec wait
