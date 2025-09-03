@@ -12,5 +12,7 @@ if ! flock -x -w 10 200; then
     exit 1
 fi
 
-exec s6-setuidgid abc \
-    /usr/local/bin/yt-dlp "$@"
+s6-setuidgid abc /usr/local/bin/yt-dlp "$@"
+
+rsync -a --remove-source-files /down/ /downloads/ && \
+    find /down/ -mindepth 1 -depth -type d -empty -delete

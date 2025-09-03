@@ -31,6 +31,7 @@ fix_ownership() {
 # permissions
 fix_ownership \
     /config \
+    /down \
     /downloads
 
 echo "*** yt-dlp $(/usr/local/bin/yt-dlp --version) ready!"

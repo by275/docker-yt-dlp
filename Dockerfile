@@ -52,6 +52,7 @@ RUN \
     mkdir -p \
         /bar/app/bin \
         /bar/config \
+        /bar/down \
         /bar/downloads
 
 # add local files
@@ -90,6 +91,7 @@ RUN \
     apt-get update && \
     apt-get install -yq --no-install-recommends \
         python3-mutagen \
+        rsync \
         && \
     echo "**** cleanup ****" && \
     rm -rf \
@@ -108,6 +110,6 @@ ENV \
     TZ=Asia/Seoul \
     PATH="/app/bin:${PATH}"
 
-VOLUME /config /downloads
+VOLUME /config /down /downloads
 
 ENTRYPOINT ["/init"]
