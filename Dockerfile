@@ -110,6 +110,7 @@ ENV \
     TZ=Asia/Seoul \
     PATH="/app/bin:${PATH}"
 
+WORKDIR /config
 VOLUME /config /down /downloads
 
 ENTRYPOINT ["/init"]
