@@ -14,5 +14,7 @@ fi
 
 s6-setuidgid abc /usr/local/bin/yt-dlp "$@"
 
+echo "[rsync] executing => rsync -a --remove-sources-files /down/ /downloads/"
 rsync -a --remove-source-files /down/ /downloads/ && \
     find /down/ -mindepth 1 -depth -type d -empty -delete
+echo "[rsync] finished"
