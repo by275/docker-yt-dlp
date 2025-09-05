@@ -12,6 +12,8 @@ if ! flock -x -w 10 200; then
     exit 1
 fi
 
+cd /down || exit 1 # better run yt-dlp with --paths to be free from permission error
+
 s6-setuidgid abc /usr/local/bin/yt-dlp "$@"
 
 echo "[rsync] executing => rsync -a --remove-sources-files /down/ /downloads/"
