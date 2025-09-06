@@ -18,8 +18,8 @@ RUN \
         xz-utils \
     && \
     export FFMPEG_FILE=$(case ${TARGETPLATFORM:-linux/amd64} in \
-    "linux/amd64")   echo "ffmpeg-n7.1-latest-linux64-gpl-7.1.tar.xz"    ;; \
-    "linux/arm64")   echo "ffmpeg-n7.1-latest-linuxarm64-gpl-7.1.tar.xz" ;; \
+    "linux/amd64")   echo "ffmpeg-master-latest-linux64-gpl.tar.xz"    ;; \
+    "linux/arm64")   echo "ffmpeg-master-latest-linuxarm64-gpl.tar.xz" ;; \
     *)               echo ""        ;; esac) && \
     curl -LJ "https://github.com/yt-dlp/FFmpeg-Builds/releases/download/latest/${FFMPEG_FILE}" -o /tmp/ffmpeg.tar.xz && \
     tar -xf /tmp/ffmpeg.tar.xz --strip-components=2 --no-anchored -C /usr/local/bin/ "ffmpeg" "ffprobe"
