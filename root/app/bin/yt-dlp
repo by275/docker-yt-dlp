@@ -16,7 +16,9 @@ cd /down || exit 1 # better run yt-dlp with --paths to be free from permission e
 
 s6-setuidgid abc /usr/local/bin/yt-dlp "$@" || exit $?
 
-echo "[rsync] executing => rsync -a --remove-sources-files /down/ /downloads/"
-rsync -a --remove-source-files /down/ /downloads/ && \
-    find /down/ -mindepth 1 -depth -type d -empty -delete
-echo "[rsync] finished"
+if find /down/ -mindepth 1 -print -quit 2>/dev/null | grep -q .; then
+    echo "[rsync] executing => rsync -a --remove-source-files /down/ /downloads/"
+    rsync -a --remove-source-files /down/ /downloads/ && \
+        find /down/ -mindepth 1 -depth -type d -empty -delete
+    echo "[rsync] finished"
+fi
