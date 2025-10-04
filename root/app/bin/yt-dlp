@@ -12,6 +12,29 @@ if ! flock -x -w 10 200; then
     exit 1
 fi
 
+if [ "$1" = "cleanup" ]; then
+    # removing leftovers
+    while read -r n; do
+        # sometimes empty stdin can be redirected by the result of find
+        if [ ! -f "$n" ]; then continue; fi
+
+        # Skip hidden or partial files.
+        case "$n" in
+            (*poster.jpg) continue ;;
+        esac
+
+        nn="${n%.*}" # path with no ext
+        vid="${nn}.mp4"
+        if [ -f "$vid" ]; then continue; fi
+
+        infojson="${nn}.info.json"
+        [ -f "$infojson" ] && echo "[cleanup] removing leftovers: $infojson" && rm -f "$infojson"
+        echo "[cleanup] removing leftovers: $n" && rm -f "$n"
+
+    done <<<"$(find /downloads/ -type f -name "*.jpg")"
+    exit $?
+fi
+
 cd /down || exit 1 # better run yt-dlp with --paths to be free from permission error
 
 s6-setuidgid abc /usr/local/bin/yt-dlp "$@" || exit $?
