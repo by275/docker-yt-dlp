@@ -37,7 +37,7 @@ fi
 
 cd /down || exit 1 # better run yt-dlp with --paths to be free from permission error
 
-s6-setuidgid abc /usr/local/bin/yt-dlp "$@" || exit $?
+s6-setuidgid abc /usr/local/bin/yt-dlp "$@"
 
 if find /down/ -mindepth 1 -print -quit 2>/dev/null | grep -q .; then
     echo "[rsync] executing => rsync -a --remove-source-files /down/ /downloads/"
