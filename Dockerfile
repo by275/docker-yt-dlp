@@ -28,6 +28,18 @@ RUN \
     echo "*** install yt-dlp ***" && \
     curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
 
+FROM base AS deno
+
+ARG DEBIAN_FRONTEND="noninteractive"
+
+RUN \
+    echo "*** install deno ***" && \
+    apt-get update && \
+    apt-get install -yq --no-install-recommends \
+        unzip \
+    && \
+    curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh -s -- -y
+
 # 
 # COLLECT
 # 
@@ -46,6 +58,9 @@ COPY --from=prebuilt /go/bin/go-cron /bar/usr/local/bin/
 COPY --from=ytdlp --chown=0:0 /usr/local/bin/ffmpeg /bar/usr/local/bin/
 COPY --from=ytdlp --chown=0:0 /usr/local/bin/ffprobe /bar/usr/local/bin/
 COPY --from=ytdlp /usr/local/bin/yt-dlp /bar/usr/local/bin/
+
+# add deno
+COPY --from=deno /usr/local/bin/deno /bar/usr/local/bin/
 
 RUN \
     echo "**** directories ****" && \
