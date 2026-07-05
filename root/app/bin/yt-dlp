@@ -2,17 +2,47 @@
 
 LOCK_FILE="/tmp/yt-dlp.lock"
 
+if [ -z "${NO_COLOR:-}" ]; then
+    C_RESET=$'\033[0m'
+    C_BOLD=$'\033[1m'
+    C_DIM=$'\033[2m'
+    C_BLUE=$'\033[34m'
+    C_GREEN=$'\033[32m'
+    C_RED=$'\033[31m'
+else
+    C_RESET=""
+    C_BOLD=""
+    C_DIM=""
+    C_BLUE=""
+    C_GREEN=""
+    C_RED=""
+fi
+
+section() {
+    printf '\n%s======== %s ========%s\n' "$C_BLUE$C_BOLD" "$1" "$C_RESET"
+}
+
+info() {
+    printf '%s[%s]%s %s\n' "$C_GREEN" "$1" "$C_RESET" "$2"
+}
+
+error() {
+    printf '%s[%s]%s %s\n' "$C_RED" "$1" "$C_RESET" "$2"
+}
+
 exec 200> "$LOCK_FILE"
 
 # acquiring lock using flock...
 # -x: get an exclusive lock
 # -w <secs>: wait for a limited amount of time
 if ! flock -x -w 10 200; then
-    echo "ERROR: Another instance of yt-dlp is already running. Timed out after 10 seconds..."
+    error "lock" "Another instance of yt-dlp is already running. Timed out after 10 seconds..."
     exit 1
 fi
 
 if [ "$1" = "cleanup" ]; then
+    section "cleanup"
+
     # removing leftovers
     while read -r n; do
         # sometimes empty stdin can be redirected by the result of find
@@ -28,20 +58,35 @@ if [ "$1" = "cleanup" ]; then
         if [ -f "$vid" ]; then continue; fi
 
         infojson="${nn}.info.json"
-        [ -f "$infojson" ] && echo "[cleanup] removing leftovers: $infojson" && rm -f "$infojson"
-        echo "[cleanup] removing leftovers: $n" && rm -f "$n"
+        [ -f "$infojson" ] && info "cleanup" "removing leftovers: $infojson" && rm -f "$infojson"
+        info "cleanup" "removing leftovers: $n" && rm -f "$n"
 
     done <<<"$(find /downloads/ -type f -name "*.jpg")"
+    info "cleanup" "finished"
     exit $?
 fi
 
 cd /down || exit 1 # better run yt-dlp with --paths to be free from permission error
 
+section "yt-dlp"
 s6-setuidgid abc /usr/local/bin/yt-dlp "$@"
+yt_dlp_status=$?
 
 if find /down/ -mindepth 1 -print -quit 2>/dev/null | grep -q .; then
-    echo "[rsync] executing => rsync -a --remove-source-files /down/ /downloads/"
-    rsync -a --remove-source-files /down/ /downloads/ && \
+    section "rsync"
+    info "rsync" "executing => rsync -a --remove-source-files --human-readable --stats --out-format='moved: %n (%l)' /down/ /downloads/"
+
+    if rsync -a --remove-source-files --human-readable --stats \
+        --out-format="${C_DIM}moved:${C_RESET} %n ${C_BOLD}(%l)${C_RESET}" \
+        /down/ /downloads/; then
         find /down/ -mindepth 1 -depth -type d -empty -delete
-    echo "[rsync] finished"
+        info "rsync" "finished"
+    else
+        error "rsync" "failed"
+        exit 1
+    fi
+else
+    info "rsync" "nothing to transfer from /down"
 fi
+
+exit "$yt_dlp_status"
