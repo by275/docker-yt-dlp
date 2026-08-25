@@ -31,6 +31,7 @@ RUN \
 FROM base AS deno
 
 ARG DEBIAN_FRONTEND="noninteractive"
+ENV DENO_INSTALL=/usr/local
 
 RUN \
     echo "*** install deno ***" && \
@@ -38,7 +39,7 @@ RUN \
     apt-get install -yq --no-install-recommends \
         unzip \
     && \
-    curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh -s -- -y
+    curl -fsSL https://deno.land/install.sh | sh
 
 # 
 # COLLECT
