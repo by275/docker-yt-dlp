@@ -2,7 +2,9 @@
 
 LOCK_FILE="/tmp/yt-dlp.lock"
 
-if [ -z "${NO_COLOR:-}" ]; then
+# Emit ANSI colors only when stdout is a terminal. Container logs and redirected
+# output should remain plain text even when NO_COLOR is not explicitly set.
+if [ -z "${NO_COLOR:-}" ] && [ -t 1 ]; then
     C_RESET=$'\033[0m'
     C_BOLD=$'\033[1m'
     C_DIM=$'\033[2m'
