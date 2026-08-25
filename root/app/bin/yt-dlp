@@ -79,7 +79,7 @@ if find /down/ -mindepth 1 -print -quit 2>/dev/null | grep -q .; then
     info "rsync" "executing => rsync -a --remove-source-files --human-readable --stats --out-format='moved: %n (%l)' /down/ /downloads/"
 
     if rsync -a --remove-source-files --human-readable --stats \
-        --out-format="${C_DIM}moved:${C_RESET} %n ${C_BOLD}(%l)${C_RESET}" \
+        --out-format='moved: %n (%l)' \
         /down/ /downloads/; then
         find /down/ -mindepth 1 -depth -type d -empty -delete
         info "rsync" "finished"
