@@ -60,7 +60,7 @@ ARG DEBIAN_FRONTEND="noninteractive"
 
 # add s6 overlay
 COPY --from=prebuilt /s6/ /bar/
-ADD https://raw.githubusercontent.com/by275/docker-base/main/_/etc/cont-init.d/adduser /bar/etc/s6-overlay/scripts/adduser
+ADD https://raw.githubusercontent.com/by275/docker-base/main/_/etc/cont-init.d/adduser /bar/etc/s6-overlay/scripts/init-adduser
 
 # add go-cron
 COPY --from=prebuilt /go/bin/go-cron /bar/usr/local/bin/
