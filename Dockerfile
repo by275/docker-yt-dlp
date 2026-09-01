@@ -1,5 +1,8 @@
+# syntax=docker/dockerfile:1
+
 ARG UBUNTU_VER=24.04
 ARG TARGETPLATFORM
+ARG TARGETARCH
 
 FROM ghcr.io/by275/base:ubuntu AS prebuilt
 FROM ghcr.io/by275/base:ubuntu${UBUNTU_VER} AS base
@@ -10,13 +13,17 @@ FROM ghcr.io/by275/base:ubuntu${UBUNTU_VER} AS base
 FROM base AS ytdlp
 
 ARG DEBIAN_FRONTEND="noninteractive"
+ARG TARGETPLATFORM
+ARG TARGETARCH
 
-RUN \
+RUN --mount=type=cache,id=apt-archives-${TARGETARCH},target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,id=apt-lists-${TARGETARCH},target=/var/lib/apt/lists,sharing=locked \
     echo "*** install yt-dlp/FFmpeg-Builds ***" && \
     apt-get update && \
     apt-get install -yq --no-install-recommends \
-        xz-utils \
-    && \
+        xz-utils
+
+RUN \
     export FFMPEG_FILE=$(case ${TARGETPLATFORM:-linux/amd64} in \
     "linux/amd64")   echo "ffmpeg-master-latest-linux64-gpl.tar.xz"    ;; \
     "linux/arm64")   echo "ffmpeg-master-latest-linuxarm64-gpl.tar.xz" ;; \
@@ -31,14 +38,17 @@ RUN \
 FROM base AS deno
 
 ARG DEBIAN_FRONTEND="noninteractive"
+ARG TARGETARCH
 ENV DENO_INSTALL=/usr/local
 
-RUN \
+RUN --mount=type=cache,id=apt-archives-${TARGETARCH},target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,id=apt-lists-${TARGETARCH},target=/var/lib/apt/lists,sharing=locked \
     echo "*** install deno ***" && \
     apt-get update && \
     apt-get install -yq --no-install-recommends \
-        unzip \
-    && \
+        unzip
+
+RUN \
     curl -fsSL https://deno.land/install.sh | sh
 
 # 
@@ -100,9 +110,11 @@ LABEL maintainer="by275"
 LABEL org.opencontainers.image.source=https://github.com/by275/docker-yt-dlp
 
 ARG DEBIAN_FRONTEND="noninteractive"
+ARG TARGETARCH
 
 # install packages
-RUN \
+RUN --mount=type=cache,id=apt-archives-${TARGETARCH},target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,id=apt-lists-${TARGETARCH},target=/var/lib/apt/lists,sharing=locked \
     echo "**** install runtime packages ****" && \
     apt-get update && \
     apt-get install -yq --no-install-recommends \
@@ -113,9 +125,7 @@ RUN \
     rm -rf \
         /root/.cache \
         /tmp/* \
-        /var/tmp/* \
-        /var/cache/* \
-        /var/lib/apt/lists/*
+        /var/tmp/*
 
 # add build artifacts
 COPY --from=collector /bar/ /

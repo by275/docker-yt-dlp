@@ -43,6 +43,9 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
           platforms: linux/amd64,linux/arm64
           push: true
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache,mode=max
+          no-cache: ${{ github.event_name == 'schedule' }}
       -
         name: Notification
         uses: sarisia/actions-status-discord@v1
