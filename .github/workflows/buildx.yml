@@ -8,12 +8,19 @@ on:
   schedule:
     - cron: "0 21 * * 5"
 
+defaults:
+  run:
+    shell: bash
+
 env:
   IMAGE_NAME: ghcr.io/by275/yt-dlp
 
 jobs:
   buildx:
     runs-on: ubuntu-latest
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
     permissions:
       packages: write
     steps:
@@ -43,6 +50,7 @@ jobs:
             ${{ env.IMAGE_NAME }}:latest
           platforms: linux/amd64,linux/arm64
           push: true
+          pull: true
           cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache,mode=max
           no-cache: ${{ github.event_name == 'schedule' }}
