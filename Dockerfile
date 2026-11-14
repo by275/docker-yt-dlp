@@ -105,6 +105,7 @@ RUN --mount=type=cache,id=apt-archives-${TARGETARCH},target=/var/cache/apt,shari
     echo "**** install runtime packages ****" && \
     apt-get update && \
     apt-get install -yq --no-install-recommends \
+        jq \
         python3-mutagen \
         rsync \
         && \

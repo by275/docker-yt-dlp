@@ -23,6 +23,78 @@ if [ -n "${YT_DLP_UPDATE_ARG}" ]; then
     /usr/local/bin/yt-dlp ${YT_DLP_UPDATE_ARG}
 fi
 
+install_pot_plugin() {
+    local url="$1"
+    local digest="$2"
+    local release_tag="$3"
+    local temp
+
+    temp=$(mktemp "${pot_plugin_dir}/.bgutil-ytdlp-pot-provider.XXXXXX") || return 1
+    echo "*** downloading bgutil-ytdlp-pot-provider plugin (${release_tag})"
+    if curl -fLsS --retry 3 "${url}" -o "${temp}" && \
+        [ "sha256:$(sha256sum -- "${temp}" | cut -d' ' -f1)" = "${digest}" ] && \
+        mv -f "${temp}" "${pot_plugin}"; then
+        return 0
+    fi
+
+    rm -f -- "${temp}"
+    return 1
+}
+
+if [ -n "${YT_DLP_POT:-}" ]; then
+    pot_plugin_dir="/config/plugins"
+    pot_plugin="${pot_plugin_dir}/bgutil-ytdlp-pot-provider.zip"
+
+    if [ "${YT_DLP_POT}" = "latest" ]; then
+        pot_api_url="https://api.github.com/repos/Brainicism/bgutil-ytdlp-pot-provider/releases/latest"
+    elif [[ "${YT_DLP_POT}" =~ ^[[:alnum:]][[:alnum:]._-]*$ ]]; then
+        pot_api_url="https://api.github.com/repos/Brainicism/bgutil-ytdlp-pot-provider/releases/tags/${YT_DLP_POT}"
+    else
+        echo "*** ERROR: YT_DLP_POT must be 'latest' or a release tag"
+        exit 1
+    fi
+
+    mkdir -p "${pot_plugin_dir}"
+    pot_problem=""
+
+    if ! pot_release_json=$(curl -fLsS --retry 3 \
+        -H 'Accept: application/vnd.github+json' \
+        "${pot_api_url}"); then
+        pot_problem="failed to retrieve PO Token plugin release metadata"
+    else
+        pot_release_info=$(jq -r '
+            . as $release
+            | ([ $release.assets[]? | select(.name == "bgutil-ytdlp-pot-provider.zip") ][0]) as $asset
+            | [ $release.tag_name // "", $asset.digest // "", $asset.browser_download_url // "" ]
+            | @tsv
+        ' <<< "${pot_release_json}") || pot_release_info=""
+        IFS=$'\t' read -r pot_release_tag pot_digest pot_url <<< "${pot_release_info}"
+        pot_digest="${pot_digest,,}"
+
+        if [ -z "${pot_release_tag}" ] || \
+            [[ ! "${pot_digest}" =~ ^sha256:[[:xdigit:]]{64}$ ]] || \
+            [[ ! "${pot_url}" =~ ^https://github\.com/Brainicism/bgutil-ytdlp-pot-provider/releases/download/ ]]; then
+            pot_problem="PO Token release metadata has no valid asset digest"
+        elif [ -s "${pot_plugin}" ] && \
+            [ "sha256:$(sha256sum -- "${pot_plugin}" | cut -d' ' -f1)" = "${pot_digest}" ]; then
+            echo "*** bgutil-ytdlp-pot-provider plugin is up to date (${pot_release_tag})"
+        elif install_pot_plugin "${pot_url}" "${pot_digest}" "${pot_release_tag}"; then
+            echo "*** bgutil-ytdlp-pot-provider plugin installed (${pot_release_tag})"
+        else
+            pot_problem="failed to download or verify the PO Token plugin"
+        fi
+    fi
+
+    if [ -n "${pot_problem}" ]; then
+        if [ -s "${pot_plugin}" ]; then
+            echo "*** WARNING: ${pot_problem}; keeping the existing PO Token plugin"
+        else
+            echo "*** ERROR: ${pot_problem}; no existing PO Token plugin is available"
+            exit 1
+        fi
+    fi
+fi
+
 fix_ownership() {
     find "$@" \! \( -uid "$(id -u abc)" -gid "$(id -g abc)" \) -print0 | \
         xargs -0 --no-run-if-empty chown -h abc:abc
