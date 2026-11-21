@@ -32,6 +32,34 @@ error() {
     printf '%s[%s]%s %s\n' "$C_RED" "$1" "$C_RESET" "$2"
 }
 
+check_mount_anchors() {
+    local anchor
+    local -a anchor_dirs=() anchor_files=()
+
+    IFS='|' read -r -a anchor_dirs <<< "${WAIT_ANCHOR_DIRS:-}"
+    IFS='|' read -r -a anchor_files <<< "${WAIT_ANCHOR_FILES:-}"
+
+    for anchor in "${anchor_dirs[@]}"; do
+        [ -z "$anchor" ] && continue
+        if [ ! -d "$anchor" ]; then
+            error "mount" "Required anchor directory is missing: ${anchor}"
+            return 1
+        fi
+    done
+
+    for anchor in "${anchor_files[@]}"; do
+        [ -z "$anchor" ] && continue
+        if [ ! -f "$anchor" ]; then
+            error "mount" "Required anchor file is missing: ${anchor}"
+            return 1
+        fi
+    done
+}
+
+if ! check_mount_anchors; then
+    exit 1
+fi
+
 has_video() {
     local path="$1"
     local candidate candidate_base ext
